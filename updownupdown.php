@@ -3,7 +3,7 @@
  * Plugin Name: UpDownUpDownWithSorting
  * Plugin URI: https://github.com/Firmware-Repairman/UpDownUpDownWithSorting
  * Description: Up/down voting for posts and comments
- * Version: 2.1.2
+ * Version: 2.1.3
  * Author: Craig Mautner
  * Author URI:
  * License: GPL2
@@ -269,7 +269,7 @@ if (!class_exists("UpDownPostCommentVotes"))
 			$vote_label = '';
 			$up_classnames = '';
 			$down_classnames = '';
-			$down_classnames = '';
+			$updown_classnames = '';
 
 			$votable = (is_user_logged_in() || $this->guest_allowed()) && $votable;
 
