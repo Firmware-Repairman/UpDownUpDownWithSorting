@@ -9,7 +9,9 @@ jQuery(document).ready(function(){
         post_id: post_id,
         direction: direction
       };
-      jQuery.post(UpDownUpDown.ajaxurl, data, function(response){ handleVoteCallback(response); });
+      jQuery.post(UpDownUpDown.ajaxurl, data, function(response){ handleVoteCallback(response); }).fail(function(xhr, status, error){
+        alert('Post Vote request failed: ' + status + ' ' + error);
+      });
   }
 
   function voteComment( comment_id, post_id, direction ) {
@@ -19,12 +21,20 @@ jQuery(document).ready(function(){
         post_id: post_id,
         direction: direction
       };
-      jQuery.post(UpDownUpDown.ajaxurl, data, function(response){ handleVoteCallback(response); });
+      jQuery.post(UpDownUpDown.ajaxurl, data, function(response){ handleVoteCallback(response); }).fail(function(xhr, status, error){
+        alert('Comment Vote request failed: ' + status + ' ' + error);
+      });
   }
 
   function handleVoteCallback( response ) {
+    var vote_response;
+    try {
+      vote_response = jQuery.parseJSON(response);
+    } catch (e) {
+      alert('Invalid vote response: ' + response);
+      return;
+    }
 
-    var vote_response = jQuery.parseJSON(response);
     if ( vote_response.status == 1 ) {
       //Success, update vote count
 
@@ -112,8 +122,10 @@ jQuery(document).ready(function(){
       }
     } else {
       //Failure, notify user
-      if ( vote_response.message  != null ) {
+      if ( vote_response.message ) {
         alert( vote_response.message );
+      } else {
+        alert('Vote failed. Server returned status ' + vote_response.status + '.');
       }
     }
   }
@@ -130,13 +142,31 @@ jQuery(document).ready(function(){
 	{
 		var id = jQuery(this).parent().parent().attr('id').split("-");
     var vote_value = -1;
-    var button_obj = jQuery(event.target);
+    var button_obj = jQuery(this);
+    var vote_value_attr = button_obj.attr('vote-direction') || button_obj.attr('data-vote-direction') || button_obj.data('vote-direction');
+
+    // Fallback: detect direction based on classes if attributes are stripped or missing
+    if (vote_value_attr === undefined || vote_value_attr === null || vote_value_attr === '') {
+        if (button_obj.hasClass('updown-up-button')) {
+            vote_value_attr = "1";
+        } else if (button_obj.hasClass('updown-down-button')) {
+            vote_value_attr = "-1";
+        }
+    }
+
+    console.log('UpDown vote click detected!', {
+      id: id,
+      vote_value_attr: vote_value_attr,
+      src: button_obj.attr('src')
+    });
 
     //Remove vote if clicking same vote again
 		if ( button_obj.attr('src').indexOf('-on.svg') >= 0 )
 			vote_value = 0;
 		else
-			vote_value = button_obj.attr('vote-direction');
+			vote_value = parseInt(vote_value_attr, 10) || 0;
+
+    console.log('Calculated vote_value:', vote_value);
 
 		if (id[1] == "post" && id[2])
 			votePost(id[2], vote_value );

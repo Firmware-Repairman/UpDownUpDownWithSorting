@@ -3,7 +3,7 @@
  * Plugin Name: UpDownUpDownWithSorting
  * Plugin URI: https://github.com/Firmware-Repairman/UpDownUpDownWithSorting
  * Description: Up/down voting for posts and comments
- * Version: 2.1.3
+ * Version: 2.1.4
  * Author: Craig Mautner
  * Author URI:
  * License: GPL2
@@ -41,7 +41,7 @@ if (!class_exists("UpDownPostCommentVotes"))
 	{
 		function __construct()
 		{
-			add_action( 'init', array( &$this, 'init_plugin' ));
+			add_action( 'wp_enqueue_scripts', array( &$this, 'load_vote_client_resources' ));
 			add_action( 'wp_ajax_register_vote', array( &$this, 'ajax_register_vote' ));
 			add_action( 'wp_ajax_nopriv_register_vote', array( &$this, 'ajax_register_vote' ));
 			add_action( 'wp_head', array( &$this, 'add_ajax_url' ));
@@ -188,7 +188,7 @@ if (!class_exists("UpDownPostCommentVotes"))
 				 wp_register_script( 'updownupdown',
 						 plugins_url( '/js/updownupdown.js', __FILE__),
 						 array( 'jquery' ),
-						 '2.1.2' );
+						 '2.1.10' );
 				 wp_enqueue_script('updownupdown');
 			}
 		}
@@ -372,9 +372,11 @@ if (!class_exists("UpDownPostCommentVotes"))
 
 			//Validate expected params
 			if ( ($_POST['post_id'] == null && $_POST['comment_id'] == null)
-						|| $_POST['direction'] == null
-				|| !$user_id )
+						|| !isset($_POST['direction']) || $_POST['direction'] === ''
+				|| !$user_id ) {
+				$result['message'] = 'Invalid vote request. Missing post, comment, direction, or user ID.';
 				die(json_encode($result));
+			}
 
 			$post_id = $_POST['post_id'];
 			$comment_id = $_POST['comment_id'];
@@ -391,6 +393,8 @@ if (!class_exists("UpDownPostCommentVotes"))
 			$vote_value = $_POST['direction'];
 			$down_vote = 0;
 			$up_vote = 0;
+			$up_vote_delta = 0;
+			$down_vote_delta = 0;
 
 			if ( $vote_value > 0 ) {
 				$vote_value = 1;
